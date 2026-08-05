@@ -60,7 +60,7 @@ This section of the Knowledge Hub focuses on:
 
 # Sections
 
-- `@/sre`
+- `/sre`
 - `/observability`
 - `/monitoring`
 - `/dynatrace`
