@@ -1,0 +1,923 @@
+# DQL Data Model
+
+## Overview
+
+Before writing advanced DQL queries, it is important to understand how data is represented inside Dynatrace.
+
+DQL works with observability data stored in **Grail**, Dynatrace's data storage and analytics platform.
+
+The basic idea is:
+
+```text
+Telemetry
+   │
+   ├── Logs
+   ├── Metrics
+   ├── Traces
+   ├── Events
+   └── Other Observability Data
+           │
+           ▼
+         Grail
+           │
+           ▼
+          DQL
+           │
+           ▼
+       Analysis
+```
+
+Understanding the data model makes it much easier to write correct queries.
+
+---
+
+# Learning Objectives
+
+After completing this document, you should understand:
+
+* Dynatrace data model
+* Grail
+* Records
+* Fields
+* Data types
+* Logs
+* Spans
+* Events
+* Metrics
+* Entities
+* Relationships
+* Timestamps
+* Arrays
+* DQL data access
+* How data is structured for analysis
+
+---
+
+# What is a Data Model?
+
+A data model defines how information is structured and represented.
+
+For example, a log record may contain:
+
+```text
+Timestamp
+Log Level
+Message
+Service
+Host
+```
+
+Conceptually:
+
+```text
+Log Record
+│
+├── timestamp
+├── loglevel
+├── content
+├── service.name
+└── host.name
+```
+
+DQL queries these fields to analyze the record.
+
+---
+
+# Grail
+
+Grail is Dynatrace's unified data store and analytics platform.
+
+It is designed to handle large amounts of observability data.
+
+Conceptually:
+
+```text
+Applications
+      │
+      ▼
+Telemetry
+      │
+      ▼
+     Grail
+      │
+      ├── Logs
+      ├── Metrics
+      ├── Spans
+      ├── Events
+      └── Other Records
+```
+
+DQL provides the query interface for analyzing this data.
+
+---
+
+# What is a Record?
+
+A record represents one individual piece of data.
+
+For example, one log entry can be represented as a record:
+
+```text
+Record
+│
+├── timestamp
+├── loglevel
+├── content
+└── service.name
+```
+
+Another record may represent a trace span:
+
+```text
+Record
+│
+├── timestamp
+├── duration
+├── service.name
+├── span.name
+└── trace.id
+```
+
+Different record types contain different fields.
+
+---
+
+# What is a Field?
+
+A field is an individual piece of information inside a record.
+
+Example:
+
+```text
+Log Record
+
+timestamp = 10:30:15
+loglevel = ERROR
+content = Database connection failed
+```
+
+Fields:
+
+```text
+timestamp
+loglevel
+content
+```
+
+DQL uses these fields for filtering, sorting, grouping, and analysis.
+
+---
+
+# Fields as Key-Value Information
+
+You can think of a record as a collection of key-value pairs.
+
+```text
+service.name → payment-service
+loglevel     → ERROR
+status_code  → 500
+```
+
+The field name identifies the information.
+
+The value contains the actual data.
+
+---
+
+# Data Types
+
+Fields can contain different types of values.
+
+Common data types include:
+
+```text
+String
+Integer
+Long
+Double
+Boolean
+Timestamp
+Array
+Record
+```
+
+Understanding data types is important because different operations work with different types.
+
+---
+
+# String
+
+A string represents textual information.
+
+Examples:
+
+```text
+"ERROR"
+"payment-service"
+"database connection failed"
+```
+
+String fields are commonly used for filtering.
+
+Example:
+
+```dql
+fetch logs
+| filter loglevel == "ERROR"
+```
+
+---
+
+# Numeric Data
+
+Numeric fields represent numbers.
+
+Examples:
+
+```text
+500
+200
+3.14
+1250
+```
+
+Numeric values can be used for:
+
+```text
+Comparisons
+Aggregation
+Calculations
+Sorting
+```
+
+Example concept:
+
+```text
+response time > 1000 ms
+```
+
+---
+
+# Boolean
+
+Boolean values represent:
+
+```text
+true
+false
+```
+
+They are commonly used for yes/no conditions.
+
+Example:
+
+```text
+is_failed = true
+```
+
+---
+
+# Timestamp
+
+Timestamps represent points in time.
+
+Observability data relies heavily on timestamps.
+
+Examples:
+
+```text
+Request Start
+Log Creation
+Trace Start
+Event Occurrence
+```
+
+Time information allows engineers to investigate:
+
+```text
+What happened?
+When did it happen?
+How long did it last?
+```
+
+---
+
+# Time-Based Analysis
+
+Suppose an incident occurred at:
+
+```text
+10:15 AM
+```
+
+An SRE may investigate:
+
+```text
+10:00 → 10:30
+```
+
+DQL can be used to analyze telemetry within a specific time period.
+
+Time-based analysis is one of the most important capabilities in observability.
+
+---
+
+# Arrays
+
+Some fields can contain multiple values.
+
+Conceptually:
+
+```text
+tags =
+[
+  "production",
+  "payment",
+  "critical"
+]
+```
+
+Arrays are useful when one record contains multiple related values.
+
+---
+
+# Nested Records
+
+Some data can contain nested structures.
+
+Conceptually:
+
+```text
+Application
+│
+├── name
+├── version
+└── owner
+      ├── team
+      └── department
+```
+
+Understanding nested data becomes important when working with complex observability records.
+
+---
+
+# Logs
+
+Logs contain textual or structured information generated by applications and infrastructure.
+
+Example:
+
+```text
+2026-08-10 10:30:15
+ERROR
+Database connection failed
+```
+
+A structured log may contain:
+
+```text
+timestamp
+loglevel
+content
+service.name
+host.name
+```
+
+DQL can query and analyze these records.
+
+---
+
+# Spans
+
+A span represents an operation within a distributed trace.
+
+Example:
+
+```text
+Trace
+│
+├── Frontend Request
+│
+├── API Call
+│
+├── Payment Service
+│
+└── Database Query
+```
+
+Each operation can be represented by a span.
+
+Important information may include:
+
+```text
+Trace ID
+Span ID
+Service
+Duration
+Status
+Timestamp
+```
+
+---
+
+# Distributed Traces
+
+A trace represents the complete journey of a request through a distributed system.
+
+Example:
+
+```text
+User
+ │
+ ▼
+Frontend
+ │
+ ▼
+API Gateway
+ │
+ ▼
+Order Service
+ │
+ ▼
+Database
+```
+
+The complete request path forms a trace.
+
+DQL can help analyze individual spans and aggregate trace-related information.
+
+---
+
+# Events
+
+Events represent occurrences or state changes.
+
+Examples:
+
+```text
+Deployment
+Configuration Change
+Host Restart
+Performance Event
+Availability Event
+```
+
+Events can be correlated with metrics, logs, and traces.
+
+---
+
+# Metrics
+
+Metrics represent numerical measurements over time.
+
+Examples:
+
+```text
+CPU Usage
+Memory Usage
+Request Count
+Response Time
+Error Rate
+```
+
+A metric can be represented conceptually as:
+
+```text
+Metric
+│
+├── Value
+├── Timestamp
+└── Dimensions
+```
+
+---
+
+# Metric Dimensions
+
+Dimensions provide context about a metric.
+
+For example:
+
+```text
+CPU Usage
+```
+
+may be associated with:
+
+```text
+Host = server-01
+Environment = production
+Service = payment
+```
+
+Dimensions allow metrics to be analyzed by different attributes.
+
+---
+
+# Entities
+
+An entity represents an identifiable component in an environment.
+
+Examples:
+
+```text
+Host
+Service
+Application
+Process Group
+Database
+Kubernetes Pod
+Kubernetes Node
+```
+
+Entities help connect telemetry to real components.
+
+---
+
+# Entity Relationships
+
+Modern applications contain many dependencies.
+
+Example:
+
+```text
+Application
+     │
+     ▼
+Service
+     │
+     ▼
+Database
+     │
+     ▼
+Host
+```
+
+Understanding these relationships is important for troubleshooting.
+
+---
+
+# Smartscape
+
+Dynatrace Smartscape provides topology information about entities and their relationships.
+
+Conceptually:
+
+```text
+Application
+     │
+     ├──────────────┐
+     ▼              ▼
+Service A       Service B
+     │              │
+     ▼              ▼
+Database A      Database B
+```
+
+This helps engineers understand application dependencies.
+
+---
+
+# Telemetry Correlation
+
+One of the most important concepts in Dynatrace is correlating different telemetry types.
+
+Example:
+
+```text
+Metric
+  │
+  ▼
+CPU Spike
+  │
+  ▼
+Service Performance Issue
+  │
+  ▼
+Trace Latency
+  │
+  ▼
+Error Logs
+```
+
+DQL can be used as part of this investigation.
+
+---
+
+# Records vs Entities
+
+These concepts are related but different.
+
+### Record
+
+A record represents a piece of telemetry data.
+
+Examples:
+
+```text
+One Log
+One Span
+One Event
+```
+
+### Entity
+
+An entity represents a monitored component.
+
+Examples:
+
+```text
+One Host
+One Service
+One Kubernetes Pod
+```
+
+A record can contain references or attributes associated with an entity.
+
+---
+
+# Example: Application Error
+
+Suppose a payment service returns HTTP 500 errors.
+
+Possible telemetry:
+
+```text
+Service
+   │
+   ▼
+HTTP 500
+   │
+   ├── Trace
+   │
+   ├── Log
+   │
+   └── Metric
+```
+
+The same problem can appear in multiple telemetry sources.
+
+This allows correlation.
+
+---
+
+# DQL Data Flow
+
+A simplified data flow is:
+
+```text
+Application
+     │
+     ▼
+Telemetry
+     │
+     ▼
+Dynatrace
+     │
+     ▼
+Grail
+     │
+     ▼
+DQL
+     │
+     ▼
+Query Result
+```
+
+The query result can then be used for:
+
+```text
+Dashboards
+Notebooks
+Troubleshooting
+Reports
+Alerts
+Capacity Analysis
+```
+
+---
+
+# Inspecting Data Before Querying
+
+One of the most useful beginner habits is:
+
+> **Understand the data before writing a complex query.**
+
+Start with a broad query.
+
+Example:
+
+```dql
+fetch logs
+| limit 20
+```
+
+Inspect:
+
+```text
+Field Names
+Field Values
+Data Types
+Available Context
+```
+
+Then construct more specific queries.
+
+---
+
+# Example Investigation
+
+Suppose you want to find errors from a payment service.
+
+Start:
+
+```dql
+fetch logs
+| limit 20
+```
+
+Identify relevant fields.
+
+Then filter:
+
+```dql
+fetch logs
+| filter loglevel == "ERROR"
+```
+
+Then narrow further using service-related fields available in your data.
+
+Finally:
+
+```text
+Filter
+   ↓
+Group
+   ↓
+Count
+   ↓
+Analyze
+```
+
+This incremental approach is easier to troubleshoot than writing a large query immediately.
+
+---
+
+# Data Model and SRE
+
+Understanding the data model helps SREs answer:
+
+```text
+What happened?
+      │
+      ▼
+Which record shows it?
+      │
+      ▼
+Which entity was affected?
+      │
+      ▼
+What other telemetry is related?
+```
+
+This leads to faster investigations.
+
+---
+
+# Data Model and Capacity Planning
+
+Capacity planning also depends on understanding data.
+
+For example:
+
+```text
+CPU Metric
+   │
+   ▼
+Host
+   │
+   ▼
+Service
+   │
+   ▼
+Application Workload
+```
+
+This relationship helps determine whether increased resource usage is caused by workload growth.
+
+---
+
+# Common Beginner Mistakes
+
+## Mistake 1: Treating Every Telemetry Type the Same
+
+Logs, metrics, spans, and events have different structures.
+
+---
+
+## Mistake 2: Ignoring Field Types
+
+A string and numeric field cannot always be processed in the same way.
+
+---
+
+## Mistake 3: Assuming Field Names
+
+Do not assume a field exists.
+
+Inspect the data first.
+
+---
+
+## Mistake 4: Ignoring Time
+
+Observability analysis is strongly time-dependent.
+
+---
+
+## Mistake 5: Ignoring Entity Context
+
+Knowing that an error occurred is useful.
+
+Knowing **which service, host, or application** was affected is much more useful.
+
+---
+
+# Recommended Mental Model
+
+Think of Dynatrace data like this:
+
+```text
+                    Grail
+                      │
+          ┌───────────┼───────────┐
+          ▼           ▼           ▼
+        Logs        Spans       Metrics
+          │           │           │
+          └───────────┼───────────┘
+                      ▼
+                  Entities
+                      │
+                      ▼
+                 Relationships
+                      │
+                      ▼
+                     DQL
+                      │
+                      ▼
+                   Analysis
+```
+
+This mental model will make advanced DQL much easier to understand.
+
+---
+
+# Interview Questions
+
+### What is Grail?
+
+Grail is Dynatrace's unified data storage and analytics platform for observability data.
+
+### What is a record?
+
+A record represents an individual piece of data, such as a log, span, or event.
+
+### What is a field?
+
+A field is an individual attribute within a record.
+
+### What is an entity?
+
+An entity represents a monitored component such as a host, service, application, or Kubernetes pod.
+
+### What is a span?
+
+A span represents an individual operation within a distributed trace.
+
+### What is the difference between a metric and a log?
+
+A metric is generally numerical time-series information, while a log contains detailed event or application information.
+
+### Why are timestamps important?
+
+They allow telemetry to be analyzed chronologically and correlated across different sources.
+
+### Why is understanding the data model important?
+
+Because DQL queries depend on knowing what data exists, how it is structured, and which fields contain the information required for analysis.
+
+---
+
+# Key Takeaways
+
+* DQL operates on structured observability data.
+* Grail stores and processes Dynatrace observability data.
+* A record represents an individual piece of telemetry.
+* Fields contain individual attributes within records.
+* Fields can have different data types.
+* Logs, spans, metrics, and events represent different types of observability data.
+* Entities represent monitored components.
+* Smartscape provides relationships between entities.
+* Timestamps are essential for observability analysis.
+* Understanding the data model is a prerequisite for writing effective DQL queries.
+* Always inspect data before building complex queries.
